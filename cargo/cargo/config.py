@@ -3,17 +3,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_HOST = os.environ.get("POSTGRESQL_HOST")
-DB_PORT = os.environ.get("POSTGRESQL_PORT")
-DB_NAME = os.environ.get("POSTGRESQL_DBNAME")
-DB_USER = os.environ.get("POSTGRESQL_USER")
-DB_PASS = os.environ.get("POSTGRESQL_PASSWORD")
+DB_HOST = "147.45.247.199"
+DB_PORT = 5432
+DB_NAME = "gen_user"
+DB_USER = "django"
+DB_PASS = "UYvg3\3\o;Pz\:"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS")
+ALLOWED_HOSTS = "litacargo-cargo-4ad0.twc1.net"
+CSRF_TRUSTED_ORIGINS = "https://litacargo-cargo-4ad0.twc1.net"
 
-SECRET_KEY_ENV = os.environ.get("SECRET_KEY")
-CELERY_BROKER_URL_ENV =  os.environ.get("CELERY_BROKER_URL")
-DEBUG_BOOL =  os.environ.get("DEBUG_BOOL")
+SECRET_KEY_ENV = "django-insecure-u!8*-id8w+j(j5#x2zhx9t@yxr1y_yknnp1!nvqnf@zw)_^1)b"
+CELERY_BROKER_URL_ENV = "redis://default:O%xk|JC0Bo@Ifl@192.168.0.4:6379"
+DEBUG_BOOL = False
 
-SITE_NAME = os.environ.get("SITE_NAME")
+SITE_NAME = "Lita"
