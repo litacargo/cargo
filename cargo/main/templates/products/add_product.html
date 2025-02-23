@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Добавить новый товар</h2>
+
+<form method="post" class="mb-3">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="product_code" class="form-label">Код товара</label>
+        <input type="text" name="product_code" id="product_code" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label for="client_code" class="form-label">Код клиента</label>
+        <input type="text" name="client_code" id="client_code" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label for="weight" class="form-label">Вес (кг)</label>
+        <input type="number" name="weight" id="weight" class="form-control" step="0.01" min="0">
+    </div>
+    <div class="mb-3">
+        <label for="price" class="form-label">Цена</label>
+        <input type="number" name="price" id="price" class="form-control" min="0">
+    </div>
+    <div class="mb-3">
+        <label for="status" class="form-label">Статус</label>
+        <select name="status" id="status" class="form-control" required>
+            <option value="">Выберите статус</option>
+            {% for status in statuses %}
+                <option value="{{ status.id }}">{{ status.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-success">Добавить</button>
+    <a href="{% url 'take' %}" class="btn btn-secondary ms-2">Отмена</a>
+</form>
+
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2 class="mb-4">Детали товара</h2>
+
+    <!-- Product details card -->
+    <div class="">
+      <div class="mt-5">
+        <h4 class="card-title">Код товара: {{ product.product_code }}</h4>
+      </div>
+      <div class="card-body mt-5">
+        <table class="table table-bordered">
+          <tbody>
+            <tr>
+              <th>Код клиента:</th>
+              <td>
+                    {% if client %}
+                        <a href="{% url 'client_detail' client.id %}" class="link">{{ client.code }}</a>
+                    {% else %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Код товара:</th>
+                <td>{{ product.product_code }}</td>
+              </tr>
+            <tr>
+              <th>Вес товара:</th>
+              <td>{{ product.weight|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <th>Цена товара:</th>
+              <td>{{ product.price|default:"Not available" }}</td>
+            </tr>
+            <tr>
+              <th>Статус:</th>
+              <td>{{ product.status.name}}</td>
+            </tr>
+            <tr>
+              <th>Дата:</th>
+              <td>{{ product.date|date:"Y-m-d" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Client detail link -->
+    <div class="mt-4">
+        <a href="{% url 'products' %}" class="btn btn-secondary">Назад</a>
+        <a href="{% url 'delete_product' product.id %}" class="btn btn-danger">Удалить</a>
+        <a href="{% url 'edit_product' product.id %}" class="btn btn-warning">Изменить</a>
+        {% if client %}
+            <a href="{% url 'client_detail' client.id %}" class="btn btn-primary">Товары этого клиента</a>
+        {% else %}
+        {% endif %}
+    </div>
+  </div>
+{% endblock %}

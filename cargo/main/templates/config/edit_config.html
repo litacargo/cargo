@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h3 class="text-center mb-4">Изменить параметр: {{ config.name }}</h3>
+    
+    <div class="">
+        <div class="">
+
+            <p>{{ config.description }}</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="new_value" class="form-label">Новое значение</label>
+                    <input type="text" name="new_value" id="new_value" class="form-control" value="{{ config.value }}" />
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

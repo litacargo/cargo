@@ -1,0 +1,40 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+{% include 'components/nav_user_config.html' %}
+<h3 class="mb-4">Филиалы</h3>
+
+<div class="d-flex justify-content-between mb-3">
+    <a href="{% url 'branch_create_page' %}" class="btn btn-primary">Добавить</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Имя</th>
+            <th>Код</th>
+            <th>Адрес</th>
+            <th></th>
+        </tr>
+    </thead>
+        <tbody>
+            {% for branch in branches %}
+            <tr>
+                <td>{{ branch.name }}</td>
+                <td>{{ branch.code }}</td>
+                <td>{{ branch.address }}</td>
+            
+                       
+                <td colspan="7" class="text-center">
+                    <a href="{% url 'branch_update' branch.id %}" class="btn btn-sm btn-warning">U</a>
+                    <a href="{% url 'branch_delete' branch.id %}" class="btn btn-sm btn-danger">D</a>
+                </td>
+            </tr>
+            {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}

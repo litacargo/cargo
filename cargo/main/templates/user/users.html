@@ -1,0 +1,53 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+{% include 'components/nav_user_config.html' %}
+
+<h3 class="mb-4">Пользователи</h3>
+
+<div class="d-flex justify-content-between mb-3">
+    <a href="{% url 'create_user' %}" class="btn btn-primary">Добавить</a>
+</div>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Имя пользователя</th>
+                            <th>ФИО</th>
+                            <th>Электронная Почта</th>
+                            <th>Активный</th>
+                            <!-- <th>Статус персонала</th> -->
+                            <th>Cуперпользователь</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                            <td>{{ user.email }}</td>
+                        <td>
+                            <input class="form-check-input" type="checkbox" {% if user.is_active %}checked{% endif %} disabled>
+                        </td>
+                        <!-- <td>
+                            <input class="form-check-input" type="checkbox" {% if user.is_staff %}checked{% endif %} disabled>
+                        </td> -->
+                        <td>
+                            <input class="form-check-input" type="checkbox" {% if user.is_superuser %}checked{% endif %} disabled>
+                        </td>
+                        <td>
+                            <p>{{ user.branch }}</p>
+                        </td>
+                        <td colspan="7" class="text-center">
+                                <a href="{% url 'user_permissions' user.id %}" class="btn btn-sm btn-warning">U</a>
+                                <a href="{% url 'delete_user_page' user.id %}" class="btn btn-sm btn-danger">D</a>
+                                <a href="{% url 'user_branch_permissions' user.id %}" class="btn btn-sm btn-info">B</a>
+                        </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+{% endblock %}

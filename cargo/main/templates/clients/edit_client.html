@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- <h2>Редактирование клиента</h2> -->
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="name" class="form-label">ФИО</label>
+        <input type="text" id="name" name="name" class="form-control" value="{{ client.name }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="number" class="form-label">Номер телефона</label>
+        <input type="text" id="number" name="number" class="form-control" value="{{ client.number }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="city" class="form-label">Город</label>
+        <input type="text" id="city" name="city" class="form-control" value="{{ client.city }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="telegram_chat_id" class="form-label">Код телеграма</label>
+        <input type="text" id="telegram_chat_id" name="telegram_chat_id" class="form-control" value="{{ client.telegram_chat_id }}">
+    </div>
+    <!-- <div class="mb-3">
+        <label for="status" class="form-label">Статус</label>
+        <select id="status" name="status" class="form-select" required>
+            <option value="pass" {% if client.status == "pass" %}selected{% endif %}>Прошел</option>
+            <option value="pending" {% if client.status == "pending" %}selected{% endif %}>Ожидает</option>
+            <option value="fail" {% if client.status == "fail" %}selected{% endif %}>Не прошел</option>
+        </select>
+    </div> -->
+
+    <div class="mb-3">
+        <label for="branch" class="form-label">Филиал</label>
+        <select id="branch" name="branch" class="form-select">
+            {% for branch in branches %}
+            <option value="{{ branch.id }}" {% if client.branch and client.branch.id == branch.id %}selected{% endif %}>
+                {{ branch.name }} {{ branch.code }} | {{ branch.address }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+    <a href="{% url 'clients_list' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

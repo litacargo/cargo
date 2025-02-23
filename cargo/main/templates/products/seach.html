@@ -1,0 +1,39 @@
+<h2>Поиск товаров</h2>
+<div>
+    <input type="text" id="search" placeholder="Поиск по коду">
+    <select id="status">
+        <option value="">Все статусы</option>
+        <option value="active">Активный</option>
+        <option value="inactive">Неактивный</option>
+    </select>
+    <input type="date" id="start_date">
+    <input type="date" id="end_date">
+    <button onclick="searchProducts()">Поиск</button>
+</div>
+<div id="results"></div>
+
+<script>
+    async function searchProducts() {
+        const search = document.getElementById('search').value;
+        const status = document.getElementById('status').value;
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        const response = await fetch(`/products/?search=${search}&status=${status}&start_date=${startDate}&end_date=${endDate}`);
+        const data = await response.json();
+
+        const resultsContainer = document.getElementById('results');
+        resultsContainer.innerHTML = '';
+
+        if (data.length === 0) {
+            resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
+            return;
+        }
+
+        data.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.innerHTML = `<strong>${product.name}</strong> (Код: ${product.code}) - Статус: ${product.status} - Дата: ${product.date}`;
+            resultsContainer.appendChild(productDiv);
+        });
+    }
+</script>

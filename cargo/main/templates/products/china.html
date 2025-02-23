@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+
+<form method="post" action="{% url 'add_products_china' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="input-group mb-3">
+        <input type="file" name="file" class="form-control" id="inputGroupFile02" required>
+        <label class="input-group-text" for="inputGroupFile02">Загрузить</label>
+    </div>
+    <button class="btn btn-primary" type="submit">Добавить</button>
+</form>
+
+
+{% endblock %}

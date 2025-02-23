@@ -1,0 +1,10 @@
+django
+psycopg2
+gunicorn
+python-dotenv
+openpyxl
+django-simple-history
+requests
+pillow
+celery[redis]
+whitenoise

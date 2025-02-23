@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Добавить пользователя</h3>
+
+<!-- Блок с ошибками формы (если они есть) -->
+{% if form.errors %}
+  <div class="alert alert-danger" role="alert">
+    <ul class="mb-0">
+      <!-- Ошибки привязанные к конкретным полям -->
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li>
+            <strong>{{ field.label }}:</strong> {{ error }}
+          </li>
+        {% endfor %}
+      {% endfor %}
+      <!-- Ошибки уровня всей формы (non_field_errors) -->
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<div>
+  <form action="{% url 'create_user' %}" method="post">
+    {% csrf_token %}
+
+    <!-- username -->
+    <div class="mb-3">
+      {{ form.username.label_tag }}
+      {{ form.username }}
+    </div>
+
+    <!-- first_name -->
+    <div class="mb-3">
+      {{ form.first_name.label_tag }}
+      {{ form.first_name }}
+    </div>
+
+    <!-- last_name -->
+    <div class="mb-3">
+      {{ form.last_name.label_tag }}
+      {{ form.last_name }}
+    </div>
+
+    <!-- email -->
+    <div class="mb-3">
+      {{ form.email.label_tag }}
+      {{ form.email }}
+    </div>
+
+    <!-- is_active -->
+    <div class="form-check mb-3">
+      {{ form.is_active }}
+      {{ form.is_active.label_tag }}
+    </div>
+
+    <!-- is_staff -->
+    <div class="form-check mb-3">
+      {{ form.is_staff }}
+      {{ form.is_staff.label_tag }}
+    </div>
+
+    <!-- is_superuser -->
+    <div class="form-check mb-3">
+      {{ form.is_superuser }}
+      {{ form.is_superuser.label_tag }}
+    </div>
+
+    <!-- password -->
+    <div class="mb-3">
+      {{ form.password.label_tag }}
+      {{ form.password }}
+    </div>
+
+    <!-- password2 -->
+    <div class="mb-3">
+      {{ form.password2.label_tag }}
+      {{ form.password2 }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Создать</button>
+  </form>
+</div>
+{% endblock %}

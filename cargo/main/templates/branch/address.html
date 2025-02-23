@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+{% include 'components/nav_user_config.html' %}
+<h3 class="mb-4">Адрес склада китай</h3>
+
+<!-- Блок просмотра (отображение полей) -->
+<div id="display-mode">
+  <p>{{ address.name1 }}</p>
+  <p>{{ address.name2 }}</p>
+  <p>{{ address.name3 }}</p>
+  <button id="edit-btn" class="btn btn-primary">Изменить</button>
+</div>
+
+<!-- Блок редактирования (Bootstrap-форма) -->
+<div id="edit-mode" style="display: none;">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    
+    <!-- Если хотите вывести поля вручную: -->
+    <!--
+    <div class="mb-3">
+      <label for="id_name1" class="form-label">Name 1</label>
+      {{ form.name1 }}
+    </div>
+    <div class="mb-3">
+      <label for="id_name2" class="form-label">Name 2</label>
+      {{ form.name2 }}
+    </div>
+    <div class="mb-3">
+      <label for="id_name3" class="form-label">Name 3</label>
+      {{ form.name3 }}
+    </div>
+    -->
+    
+    <!-- Или можно целиком {{ form.as_p }} — но тогда вручную добавлять Bootstrap-классы 
+         можно в forms.py, как было показано выше. -->
+    {{ form.as_p }}
+    
+    <button type="submit" class="btn btn-success">Сохранить</button>
+    <button type="button" id="cancel-btn" class="btn btn-secondary">Отмена</button>
+  </form>
+</div>
+
+<script>
+  const editBtn = document.getElementById('edit-btn');
+  const cancelBtn = document.getElementById('cancel-btn');
+  const displayMode = document.getElementById('display-mode');
+  const editMode = document.getElementById('edit-mode');
+
+  editBtn.addEventListener('click', () => {
+    displayMode.style.display = 'none';
+    editMode.style.display = 'block';
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    displayMode.style.display = 'block';
+    editMode.style.display = 'none';
+  });
+</script>
+{% endblock %}

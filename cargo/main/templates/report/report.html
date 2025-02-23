@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Отчет за период</h2>
+
+<!-- Форма для выбора дат -->
+<form method="get" class="d-flex mb-3">
+    <input type="date" name="start_date" value="{{ start_date }}" class="form-control me-2">
+    <input type="date" name="end_date" value="{{ end_date }}" class="form-control me-2">
+    <button type="submit" class="btn btn-primary">Фильтровать</button>
+</form>
+
+<!-- Сводная информация -->
+<h3>Общие показатели</h3>
+<p>Всего клиентов: <strong>{{ total_clients }}</strong></p>
+<p>Всего товаров: <strong>{{ total_products }}</strong></p>
+<p>Общий вес: <strong>{{ total_weight }} кг</strong></p>
+<p>Общая сумма: <strong>{{ total_price }} сом</strong></p>
+
+<!-- Детальная информация по клиентам -->
+<h3>Детали по клиентам</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Клиент</th>
+            <th>Код клиента</th>
+            <th>Количество товаров</th>
+            <th>Общий вес</th>
+            <th>Общая сумма</th>
+            <th>Способ оплаты</th>
+            <th>Первая выдача</th>
+            <th>Последняя выдача</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for detail in client_details %}
+        <tr>
+            <td>{{ detail.client__name|default:"—" }}</td>
+            <td>{{ detail.client__code|default:"—" }}</td>
+            <td>{{ detail.total_products }}</td>
+            <td>{{ detail.total_weight|default:"0" }} кг</td>
+            <td>{{ detail.total_price|default:"0" }} сом</td>
+            <td>{{ detail.payments__payment_method__name|default:"Не указан" }}</td>
+            <td>{{ detail.earliest_take_time|date:"d.m.Y H:i"|default:"—" }}</td>
+            <td>{{ detail.latest_take_time|date:"d.m.Y H:i"|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">Нет данных за выбранный период.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Подробности по товарам -->
+<h3>Подробности по товарам</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Код товара</th>
+            <th>Клиент</th>
+            <th>Вес</th>
+            <th>Цена</th>
+            <th>Время выдачи</th>
+            <th>Способ оплаты</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in product_details %}
+        <tr>
+            <td>{{ product.product_code }}</td>
+            <td>{{ product.client__name|default:"—" }} ({{ product.client__code|default:"—" }})</td>
+            <td>{{ product.weight|default:"0" }} кг</td>
+            <td>{{ product.price|default:"0" }} сом</td>
+            <td>{{ product.take_time|date:"d.m.Y H:i"|default:"—" }}</td>
+            <td>{{ product.payments__payment_method__name|default:"Не указан" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Нет выданных товаров.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

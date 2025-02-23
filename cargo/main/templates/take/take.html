@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Выдача товаров клиенту</h2>
+
+<!-- Форма для ввода кода клиента -->
+<form method="get" class="d-flex mb-3">
+    <input type="text" name="client_code" class="form-control" placeholder="Введите код клиента" value="{{ client_code }}">
+    <button type="submit" class="btn btn-primary ms-2">Поиск</button>
+    <a href="{% url 'take' %}" class="btn btn-secondary ms-2">Сброс</a>
+</form>
+
+{% if client %}
+    <h3></h3>
+    <p>Товары клиента: <strong>{{ client.name }}</strong></p>
+    <p>Общий вес: <strong><span id="total-weight">{{ total_weight }}</span> кг</strong></p>
+    <p>Общая сумма: <strong><span id="total-price">{{ total_price }}</span> сом</strong></p>
+    <p>Количество товаров: <strong><span id="total-count">{{ total_count }}</span></strong></p>
+
+    <!-- Форма для обновления статуса товаров и выбора способа оплаты -->
+    <form method="post" id="product-form">
+        {% csrf_token %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="select-all" />
+                    </th>
+                    <th>Код товара</th>
+                    <th>Вес</th>
+                    <th>Цена</th>
+                    <th>Статус</th>
+                    <th>Филиал</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" 
+                                   name="selected_products" 
+                                   value="{{ product.id }}" 
+                                   class="product-checkbox" 
+                                   data-price="{{ product.price|default:0 }}"
+                                   data-weight="{{ product.weight|default:0 }}">
+                        </td>
+                        <td>{{ product.product_code }}</td>
+                        <td>{{ product.weight|default:"—" }}</td>
+                        <td>{{ product.price|default:"—" }}</td>
+                        <td>{{ product.status.name }}</td>
+                        <td>{{ product.branch|default:"—" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">Нет товаров с таким статусом для этого клиента.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Выбор способа оплаты -->
+        <div class="mb-3">
+            <label for="payment_method" class="form-label">Способ оплаты:</label>
+            <select name="payment_method" id="payment_method" class="form-select" required>
+                <option value="" disabled selected>Выберите способ оплаты</option>
+                {% for method in payment_methods %}
+                    <option value="{{ method.id }}">{{ method.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Выдать</button>
+    </form>
+{% endif %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% else %}alert-warning{% endif %} mt-3">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<script>
+    // Function to calculate and update totals
+    function updateTotals() {
+        const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+        let totalPrice = 0;
+        let totalWeight = 0;
+        let totalCount = checkboxes.length;
+
+        checkboxes.forEach(checkbox => {
+            const price = parseFloat(checkbox.getAttribute('data-price')) || 0;
+            const weight = parseFloat(checkbox.getAttribute('data-weight')) || 0;
+            totalPrice += price;
+            totalWeight += weight;
+        });
+
+        // Update the displays
+        document.getElementById('total-price').textContent = totalPrice;
+        document.getElementById('total-weight').textContent = totalWeight.toFixed(2);
+        document.getElementById('total-count').textContent = totalCount;
+    }
+
+    // Event listener for select all checkbox
+    document.getElementById('select-all')?.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.product-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateTotals();
+    });
+
+    // Event listeners for individual checkboxes
+    document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateTotals);
+    });
+
+    // Initial calculation
+    updateTotals();
+</script>
+
+{% endblock %}

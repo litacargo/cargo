@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+
+<form method="get" class="mb-3">
+  <div class="d-flex justify-content-end">
+    <div class="dropdown">
+      {% if user.is_superuser %}
+      <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Добавить
+      </button>
+      {% endif %}
+
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'add_product' %}">Добавить</a></li>
+        <li><a class="dropdown-item" href="{% url 'page_china' %}">Китай</a></li>
+        <li><a class="dropdown-item" href="{% url 'page_bishkek' %}">Бишкек</a></li>
+      </ul>
+    </div>
+
+  </div>
+
+    <div class="row g-2 mt-2">
+        <!-- Поиск -->
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Поиск по имени, статусу или коду" value="{{ search_query }}">
+        </div>
+        <!-- Фильтр по статусу -->
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">Все статусы</option>
+                {% for status in statuses %}
+                <option value="{{ status.id }}" {% if status_filter|default:'' == status.id|stringformat:"s" %}selected{% endif %}>
+                    {{ status.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <!-- Фильтр по дате -->
+        <div class="col-md-2">
+            <input type="date" name="start_date" class="form-control" placeholder="Начальная дата" value="{{ start_date }}">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="end_date" class="form-control" placeholder="Конечная дата" value="{{ end_date }}">
+        </div>
+        <!-- Кнопка фильтра -->
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Применить</button>
+        </div>
+        <!-- Сброс фильтров -->
+        <div class="col-md-1">
+            <a href="{% url 'products' %}" class="btn btn-secondary w-100">Сброс</a>
+        </div>
+    </div>
+</form>
+
+<!-- Таблица с товарами -->
+<form method="post" action="{% url 'edit_products_page' %}">
+  {% csrf_token %}
+  <table class="table">
+    <thead>
+        <tr>
+            <td>
+              <input type="checkbox" id="select-all-products" />
+            </td>
+            <th>Код</th>
+            <th>Вес</th>
+            <th>Цена</th>
+            <th>Дата</th>
+            <th>Статус</th>
+            <th>Клиент</th>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in page_obj %}
+        <tr>
+            <td>
+              <input type="checkbox" name="product_ids" value="{{ product.id }}" class="product-checkbox">
+            </td>
+            <td>{{ product.product_code }}</td>
+            <td>{{ product.weight|default_if_none:'-' }}</td>
+            <td>{{ product.price|default_if_none:'-' }}</td>
+            <td>{{ product.date }}</td>
+            <td>{{ product.status.name }}</td>
+            <td>{{ product.client.code }}</td>
+            <td>
+                <a href="{% url 'edit_product' product.id %}" class="btn btn-sm btn-warning">U</a>
+                <a href="{% url 'delete_product' product.id %}" class="btn btn-sm btn-danger">D</a>
+                <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-primary">T</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">Нет данных</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-start">
+  <button type="submit" class="btn btn-warning">Изменить</button>
+</div>
+
+
+<div class="d-flex justify-content-center">
+</form>
+<!-- Пагинация -->
+<nav aria-label="Page navigation example">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+            <span aria-hidden="true">&lsaquo;</span>
+          </a>
+        </li>
+      {% endif %}
+      
+      {% for num in page_obj.paginator.page_range %}
+        {% if num > page_obj.number|add:"-5" and num < page_obj.number|add:"5" %}
+          <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+  
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+            <span aria-hidden="true">&rsaquo;</span>
+          </a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>  
+</div>
+
+<!-- Скрипт для выбора всех чекбоксов -->
+<script>
+  document.getElementById('select-all-products').addEventListener('change', function () {
+      const checkboxes = document.querySelectorAll('.product-checkbox');
+      checkboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+      });
+  });
+</script>
+
+{% endblock %}
+
+
+
+

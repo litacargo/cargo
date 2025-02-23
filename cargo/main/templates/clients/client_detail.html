@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Данные о клиенте: {{ client.name }}</h2>
+    
+    <!-- Информация о клиенте -->
+    <p><strong>Имя:</strong> {{ client.name }}</p>
+    <p><strong>Номер:</strong> {{ client.number }}</p>
+    <p><strong>Город:</strong> {{ client.city }}</p>
+    <p><strong>Код:</strong> {{ client.code }}</p>
+    
+    <h3>Товары клиента</h3>
+    {% if products %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Код товара</th>
+                    <th>Вес</th>
+                    <th>Цена</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                    <th>Филиал</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'product_detail' product.id %}">{{ product.product_code }}</a>
+                        </td>
+                        <td>{{ product.weight }}</td>
+                        <td>{{ product.price }}</td>
+                        <td>{{ product.date }}</td>
+                        <td>{{ product.status.name }}</td>
+                        <td>{{ product.branch.name }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>У клиента нет товаров.</p>
+    {% endif %}
+    
+    <a href="{% url 'clients_list' %}" class="btn btn-secondary">Назад</a>
+{% endblock %}

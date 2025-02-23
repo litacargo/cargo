@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form id="create_branch_form" method="post" action="{% url 'branch_create' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="name" class="form-label">Имя</label>
+        <input type="text" class="form-control" id="name" name="name">
+    </div>
+    <div class="mb-3">
+        <label for="code" class="form-label">Код</label>
+        <input type="text" class="form-control" id="code" name="code">
+    </div>
+    <div class="mb-3">
+        <label for="address" class="form-label">Адрес</label>
+        <input type="text" class="form-control" id="address" name="address">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Добавить</button>
+    <a href="{% url 'branches' %}" class="btn btn-secondary ms-2">Отмена</a>
+</form>
+
+<script>
+    function setFormAction(action) {
+        const form = document.getElementById('create_branch_form');
+        form.action = "{% url 'branch_create' %}";
+    }
+</script>
+
+{% endblock %}

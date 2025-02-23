@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% include 'components/nav_user_config.html' %}
+
+    <div class="">
+        <div class="">
+                <h3 class="mb-4">Параметры</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Текущие значения</th>
+                            <th>Изменить</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for config in configurations %}
+                        <tr>
+                            <td>{{ config.name }}</td>
+                            <td>{{ config.value }}</td>
+                            <td>
+                                <a href="{% url 'edit_config' config.id %}">Изменить</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                
+        </div>
+    </div>
+</div>
+
+{% endblock %}

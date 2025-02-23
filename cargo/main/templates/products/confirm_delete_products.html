@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Удалить товар</h2>
+
+<p>Вы уверены, что хотите удалить следующие товары?</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+    {% for product in products %}
+        <tr>
+            <td>{{ product.product_code }}</td>
+            <td>{{ product.weight }}</td>
+            <td>{{ product.price }}</td>
+            <td>{{ product.status }}</td>
+            <td>{{ product.client.code }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<form class="mt-5" method="post">
+    {% csrf_token %}
+    {% for product in products %}
+        <input type="hidden" name="product_ids" value="{{ product.id }}">
+    {% endfor %}
+    <button type="submit" name="confirm" class="btn btn-danger">Подтвердить</button>
+    <a class="ms-4" href="{% url 'products' %}">Отмена</a>
+</form>
+
+{% endblock %}

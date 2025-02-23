@@ -1,0 +1,13 @@
+<div class="">
+    <ul class="nav nav-pills d-flex justify-content-center">
+      
+      <li class="nav-item">
+        <a href="{% url 'telegram_notifications' %}" class="nav-link {% if current_mini_page == 'telegram_notifications' %}active{% endif %}" aria-current="page">Рассылка</a>
+      </li>
+  
+      <li class="nav-item">
+        <a href="{% url 'telegram_tasks' %}" class="nav-link {% if current_mini_page == 'telegram' %}active{% endif %}" aria-current="page">История</a>
+      </li>
+  
+    </ul>
+  </div>

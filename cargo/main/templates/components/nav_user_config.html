@@ -1,0 +1,26 @@
+<div class="">
+  <ul class="nav nav-pills d-flex justify-content-center">
+
+    <li class="nav-item">
+        <a href="{% url 'config' %}" class="nav-link {% if current_mini_page == 'config' %}active{% endif %}" aria-current="page">Параметры</a>
+    </li>
+    
+    <li class="nav-item">
+      <a href="{% url 'users' %}" class="nav-link {% if current_mini_page == 'users' %}active{% endif %}" aria-current="page">Пользователи</a>
+    </li>
+
+    <li class="nav-item">
+      <a href="{% url 'branches' %}" class="nav-link {% if current_mini_page == 'branch' %}active{% endif %}" aria-current="page">Филиалы</a>
+    </li>
+
+    <li class="nav-item">
+      <a href="{% url 'address' %}" class="nav-link {% if current_mini_page == 'address' %}active{% endif %}" aria-current="page">Адрес</a>
+    </li>
+
+
+    <li class="nav-item">
+      <a href="{% url 'payment_method_list' %}" class="nav-link {% if current_mini_page == 'payment_methods' %}active{% endif %}" aria-current="page">Оплата</a>
+    </li>
+
+  </ul>
+</div>

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Изменить товары</h2>
+
+<!-- Универсальная форма -->
+<form id="productsForm" method="post" action="{% url 'update_products' %}">
+    {% csrf_token %}
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Код</th>
+                <th>Вес</th>
+                <th>Цена</th>
+                <th>Дата</th>
+                <th>Статус</th>
+                <th>Клиент</th>
+                <th>Филиал</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.product_code }}</td>
+                <td>{{ product.weight }}</td>
+                <td>{{ product.price }}</td>
+                <td>{{ product.date }}</td>
+                <td>{{ product.status.name }}</td>
+                <td>{{ product.client.code }}</td>
+                <td>{{ product.branch.code }} {{ product.branch.name }}</td>
+            </tr>
+            <input type="hidden" name="product_ids" value="{{ product.id }}">
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="mb-3">
+        <label for="status" class="form-label">Статус</label>
+        <select id="status" name="status" class="form-select">
+            <option value="">Выберите статус</option>
+            {% for status in statuses %}
+            <option value="{{ status.id }}">{{ status.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- <div class="mb-3">
+        <label for="branch" class="form-label">Филиал</label>
+        <select id="branch" name="branch" class="form-select">
+            <option value="">Выберите филиал</option>
+            {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }}</option>
+            {% endfor %}
+        </select>
+    </div> -->
+
+    <div class="mt-4 d-flex gap-3">
+        <button type="submit" class="btn btn-success" onclick="setFormAction('update')">Сохранить</button>
+        <button type="submit" class="btn btn-danger" onclick="setFormAction('delete')">Удалить</button>
+        <a href="{% url 'products' %}" class="btn btn-primary">Отмена</a>
+    </div>
+</form>
+
+<script>
+    function setFormAction(action) {
+        const form = document.getElementById('productsForm');
+        if (action === 'update') {
+            form.action = "{% url 'update_products' %}";
+        } else if (action === 'delete') {
+            form.action = "{% url 'delete_products' %}";
+            // Добавляем скрытый input для подтверждения удаления
+            const confirmInput = document.createElement('input');
+            confirmInput.type = 'hidden';
+            confirmInput.name = 'confirm';
+            confirmInput.value = '1';
+            form.appendChild(confirmInput);
+        }
+    }
+</script>
+
+{% endblock %}

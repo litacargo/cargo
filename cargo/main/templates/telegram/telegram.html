@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include 'components/telegram_nav.html' %}
+
+<h3>История уведомлений</h3>
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Сообщение</th>
+            <th>Статус</th>
+            <th>Дата</th>
+            <th>Ошибка</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.message|slice:":100" }}</td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.created_at }}</td>
+            <td>{{ task.error_message }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

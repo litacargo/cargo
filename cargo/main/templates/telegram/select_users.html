@@ -1,0 +1,163 @@
+<!-- Радиокнопки: Всем / Выбрать пользователей -->
+<div class="form-group">
+    <label>
+      <input 
+        type="radio" 
+        name="send_type" 
+        value="all" 
+        checked 
+        onclick="onSendTypeChange()"
+      >
+      Всем пользователям
+    </label>
+    &nbsp;&nbsp;
+    <label>
+      <input 
+        type="radio" 
+        name="send_type" 
+        value="selected" 
+        onclick="onSendTypeChange()"
+      >
+      Выбрать пользователей
+    </label>
+  </div>
+  
+  <!-- Блок поиска (по умолчанию скрыт, показывается при выборе "Выбрать пользователей") -->
+  <div id="users-block" style="display: none; margin-top: 15px;">
+    <div>
+      <label for="search-input">Поиск пользователя:</label>
+      <input 
+        type="text" 
+        id="search-input" 
+        class="form-control mt-2"
+        placeholder="Имя, телефон, город..."
+        onkeyup="searchClients()"
+      />
+    </div>
+  
+    <!-- Контейнер для результатов поиска (вывод чекбоксов) -->
+    <div id="search-results" class="mt-3">
+      <!-- Пусто. Заполняется AJAX-ом -->
+    </div>
+  
+    <!-- Здесь копим выбранных пользователей (можно выбрать много) -->
+    <select 
+      id="selected_clients" 
+      name="selected_clients" 
+      class="form-control mt-3" 
+      multiple
+      size="5"
+    ></select>
+  
+    <!-- Кнопка "Удалить выбранных" из <select> -->
+    <button 
+      type="button" 
+      class="btn btn-danger mt-2"
+      onclick="removeSelectedFromSelect()"
+    >
+      Удалить выбранных
+    </button>
+  </div>
+  
+  <script>
+  // При выборе "Всем пользователям" скрываем блок поиска, 
+  // при выборе "Выбрать пользователей" — показываем.
+  function onSendTypeChange() {
+    const sendTypeAll = document.querySelector('input[name="send_type"][value="all"]').checked;
+    const usersBlock = document.getElementById('users-block');
+    if (sendTypeAll) {
+      usersBlock.style.display = 'none';
+    } else {
+      usersBlock.style.display = 'block';
+    }
+  }
+  
+  // При загрузке страницы сразу проверим текущее значение radio-кнопки
+  onSendTypeChange();
+  
+  // Пример функции поиска (AJAX): ищем по /clients/search/?search=...
+  function searchClients() {
+    const query = document.getElementById('search-input').value.trim();
+    const resultsDiv = document.getElementById('search-results');
+  
+    // Если строка поиска пуста — очищаем результаты
+    if (!query) {
+      resultsDiv.innerHTML = "";
+      return;
+    }
+  
+    // Отправляем GET-запрос на Django-вьюху (пример: views.search_clients)
+    fetch(`/clients/search/?search=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        // data — массив объектов: [{id, name, code, ...}, ...]
+        let html = "";
+        data.forEach(client => {
+          const displayName = client.name
+            ? client.name + (client.code ? ` (${client.code})` : "")
+            : `ID: ${client.id}`; // Если нет имени, можно хотя бы ID
+          
+          html += `
+            <div>
+              <label>
+                <input 
+                  type="checkbox" 
+                  value="${client.id}"
+                  onchange="onClientCheckboxChange(this)"
+                >
+                ${displayName}
+              </label>
+            </div>
+          `;
+        });
+        resultsDiv.innerHTML = html;
+      })
+      .catch(err => {
+        console.error("Ошибка поиска клиентов:", err);
+      });
+  }
+  
+  // При клике на чекбокс: добавить / убрать option в <select multiple>
+  function onClientCheckboxChange(checkbox) {
+    const selectEl = document.getElementById('selected_clients');
+    const clientId = checkbox.value;
+  
+    if (checkbox.checked) {
+      // Добавляем <option> с текстом из label
+      const labelText = checkbox.parentNode.textContent.trim();
+      const newOption = new Option(labelText, clientId, true, true);
+      selectEl.add(newOption);
+    } else {
+      // Удаляем <option> с тем же value
+      for (let i = 0; i < selectEl.options.length; i++) {
+        if (selectEl.options[i].value === clientId) {
+          selectEl.remove(i);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Удалить выбранных (выделенных) из <select multiple>
+  function removeSelectedFromSelect() {
+    const selectEl = document.getElementById('selected_clients');
+  
+    // Превращаем "HTMLCollection" в массив, чтобы удобно итерировать
+    const selectedOptions = [...selectEl.selectedOptions];
+  
+    selectedOptions.forEach(option => {
+      const optionValue = option.value;
+  
+      // Снимем галочку в #search-results, если такой чекбокс там есть
+      const checkboxes = document.querySelectorAll('#search-results input[type="checkbox"]');
+      checkboxes.forEach(ch => {
+        if (ch.value === optionValue) {
+          ch.checked = false;
+        }
+      });
+      // Удаляем из <select>
+      selectEl.remove(option.index);
+    });
+  }
+  </script>
+  

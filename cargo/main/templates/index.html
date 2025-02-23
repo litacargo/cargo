@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+
+<div class="row gx-5 gx-xl-10 mb-xl-10">
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-10">
+        {% include 'index_components/clients.html' %}
+    </div>
+
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-10">
+        {% include 'index_components/products.html' %}
+    </div>
+
+    <div class="col-lg-12 col-xl-12 col-xxl-6 mb-5 mb-xl-0">
+        {% include 'index_components/report.html' %}
+    </div>
+</div>
+
+
+{% endblock %}

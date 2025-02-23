@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Доступ к филиалам для пользователя {{ edit_user.username }}</h3>
+
+<form method="post">
+    {% csrf_token %}
+    <div>
+        <h4 class="mt-5">Список филиалов:</h4>
+        {% for branch in branches %}
+        <div class="mt-2">
+            <input 
+                type="checkbox" 
+                id="branch_{{ branch.id }}" 
+                name="branches" 
+                class="form-check-input "
+                value="{{ branch.id }}" 
+                {% if branch in user_branches %}checked{% endif %}
+            >
+            <label class="" for="branch_{{ branch.id }}">{{ branch.name }}</label>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="{% url 'users'%}" class="btn btn-secondary mt-5">Назад</a>
+    <button type="submit" class="btn btn-primary mt-5 ms-5">Сохранить</button>
+</form>
+{% endblock %}

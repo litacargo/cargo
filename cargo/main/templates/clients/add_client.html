@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form id="create_client_form" method="post" action="{% url 'create_client' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="name" class="form-label">ФИО</label>
+        <input type="text" class="form-control" id="name" name="name">
+    </div>
+    <div class="mb-3">
+        <label for="number" class="form-label">Номер телефона</label>
+        <input type="text" class="form-control" id="number" name="number">
+    </div>
+    <div class="mb-3">
+        <label for="city" class="form-label">Город</label>
+        <input type="text" class="form-control" id="city" name="city">
+    </div>
+
+    <div class="mb-3">
+        <label for="telegram_chat_id" class="form-label">Код телеграма</label>
+        <input type="text" class="form-control" id="telegram_chat_id" name="telegram_chat_id">
+    </div>
+
+
+
+    <div class="mb-3">
+        <label for="branch" class="form-label">Филиал</label>
+        <select id="branch" name="branch" class="form-select">
+            {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }} {{ branch.code }} | {{ branch.address }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+
+    <button type="submit" class="btn btn-primary">Добавить</button>
+    <a href="{% url 'clients_list' %}" class="btn btn-secondary ms-2">Отмена</a>
+</form>
+
+
+<script>
+    function setFormAction(action) {
+        const form = document.getElementById('create_client_form');
+        form.action = "{% url 'create_client' %}";
+    }
+</script>
+{% endblock %}

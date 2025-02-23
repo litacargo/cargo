@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h3>Права пользователя</h3>
+    <div>
+        <form action="{% url 'update_user_permissions' edit_user.id %}" method="post">
+            {% csrf_token %}
+            <div class="mb-3"></div>
+                <label for="first_name" class="form-label">Имя:</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ edit_user.first_name }}">
+            </div>
+    
+            <div class="mb-3">
+                <label for="last_name" class="form-label">Фамилия:</label>
+                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ edit_user.last_name }}">
+            </div>
+    
+            <div class="mb-3">
+                <label for="email" class="form-label">Электронная почта:</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ edit_user.email }}">
+            </div>
+    
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if edit_user.is_active %}checked{% endif %}>
+                <label class="form-check-label" for="is_active">Активный:</label>
+            </div>
+    
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="is_staff" name="is_staff" {% if edit_user.is_staff %}checked{% endif %}>
+                <label class="form-check-label" for="is_staff">Статус персонала:</label>
+            </div>
+    
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="is_superuser" name="is_superuser" {% if edit_user.is_superuser %}checked{% endif %}>
+                <label class="form-check-label" for="is_superuser">Суперпользователь:</label>
+            </div>
+    
+            <div class="mb-3">
+                <label for="password" class="form-label">Пароль:</label>
+                <input type="password" class="form-control" id="password" name="password">
+            </div>
+    
+            <button type="submit" class="btn btn-primary">Обновить</button>
+            <a href="{% url 'delete_user_page' edit_user.id %}" class="btn btn-danger ms-5">Удалить</a>
+        </form>
+    </div>
+{% endblock %}
