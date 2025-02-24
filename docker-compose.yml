@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  redis:
+    image: "redis:latest"
+    container_name: cargo_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  web:
+    build:
+      context: .
+    container_name: django_app
+    command: ["/docker/one.sh"]
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"  # Изменено на 8000, как вы хотели
+    depends_on:
+      - redis  # Заменил db на redis, если база данных не используется
+
+  celery_worker:
+    build:
+      context: .
+    container_name: celery_worker
+    command: ["/docker/celery_worker.sh"]
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - web  # Чтобы убедиться, что Django инициализирован
+
+  celery_beat:
+    build:
+      context: .
+    container_name: celery_beat
+    command: ["/docker/celery_beat.sh"]
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - web
+
+volumes:
+  redis-data:
