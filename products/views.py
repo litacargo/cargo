@@ -27,36 +27,33 @@ class ProductListView(View):
         start_date = request.GET.get('start_date', '')
         end_date = request.GET.get('end_date', '')
 
-        # Получение всех товаров
+        # Базовый QuerySet без выполнения
         user = request.user
         products_list = get_user_branch(user, Product).exclude(status__name=BaseStatus.PIKED).order_by('-id')
 
-        # Фильтрация по поисковому запросу
+        # Компактная фильтрация с использованием Q-объектов для поиска
         if search_query:
+            from django.db.models import Q
             products_list = products_list.filter(
-                product_code__icontains=search_query
-            ) | products_list.filter(
-                status__name__icontains=search_query
-            ) | products_list.filter(
-                client__name__icontains=search_query
+                Q(product_code__icontains=search_query) |
+                Q(status__name__icontains=search_query) |
+                Q(client__name__icontains=search_query)
             )
 
-        # Фильтрация по статусу
         if status_filter:
             products_list = products_list.filter(status__id=status_filter)
 
-        # Фильтрация по дате
         if start_date:
             products_list = products_list.filter(date__gte=start_date)
         if end_date:
             products_list = products_list.filter(date__lte=end_date)
 
-        # Пагинация
+        # Пагинация на уровне QuerySet
         paginator = Paginator(products_list, 30)  # 30 товаров на страницу
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
-        # Получение всех статусов для фильтрации
+        # Получение статусов
         statuses = Status.objects.all()
 
         # Рендер страницы
