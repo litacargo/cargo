@@ -72,6 +72,7 @@ class ProductListView(View):
                 'start_date': start_date,
                 'end_date': end_date,
                 'statuses': statuses,
+                'request': request
             }
         )
 
@@ -266,46 +267,71 @@ def add_products_china(request):
             clients_products_count = {}
 
             for row in sheet.iter_rows(min_row=2, values_only=True):  # Пропускаем заголовок
-                if len(row) < 2 or not row[0] or not row[1]:
-                    continue  # Пропустить строки с недостаточными данными
+                    # Проверяем только наличие product_code
+                if len(row) < 1 or not row[0]:
+                    continue  # Пропустить строки без product_code
 
                 product_code = str(row[0]).strip()
-                client_id = row[1]
+                client_id = None
+                client = None
 
-                # Если client_id — число с плавающей точкой, убираем ".0"
-                if isinstance(client_id, float):
-                    client_id = str(int(client_id))
-                else:
-                    client_id = str(client_id).strip()
+                # Проверяем, есть ли client_id во второй колонке
+                if len(row) >= 2 and row[1] is not None:
+                    client_id = row[1]
+                    # Если client_id — число с плавающей точкой, убираем ".0"
+                    if isinstance(client_id, float):
+                        client_id = str(int(client_id))
+                    else:
+                        client_id = str(client_id).strip()
 
-                # Найти клиента по code
-                client = Client.objects.filter(code=client_id).first()
-                if not client:
-                    messages.warning(request, f"Нету такого клиента: {client_id}")
-                    continue
+                    # Найти клиента по code
+                    client = Client.objects.filter(code=client_id).first()
+                    if not client:
+                        messages.warning(request, f"Нету такого клиента: {client_id}")
+
+                # Обработка даты
+                if date:
+                    if isinstance(date, datetime):
+                        date = date.date()  # Уже datetime, просто берем date
+                    elif isinstance(date, str):
+                        try:
+                            date = datetime.strptime(date, "%d-%m-%Y").date()  # Формат из примера: 25-10-2024
+                        except ValueError:
+                            try:
+                                date = datetime.strptime(date, "%d.%m.%Y").date()  # Альтернатива: 25.10.2024
+                            except ValueError:
+                                messages.warning(request, f"Неверный формат даты для {product_code}: {date}")
+                                date = None
+                    else:
+                        date = None
 
                 # Получить статус "Китай"
                 china_status, _ = Status.objects.get_or_create(name=BaseStatus.CHINA)
 
-                # Проверить, существует ли уже товар с этим кодом
-                if Product.objects.filter(product_code=product_code, client=client).exists():
+                # Проверить, существует ли уже товар с этим кодом и клиентом (если клиент есть)
+                if client and Product.objects.filter(product_code=product_code, client=client).exists():
+                    products_skipped += 1
+                    continue
+                # Если клиента нет, проверяем только по product_code
+                elif not client and Product.objects.filter(product_code=product_code, client__isnull=True).exists():
                     products_skipped += 1
                     continue
 
                 # Создать продукт
                 Product.objects.create(
                     product_code=product_code,
-                    client=client,
+                    client=client,  # Будет None, если client_id не указан или клиент не найден
                     date=datetime.utcnow(),
                     status=china_status,
-                    branch=client.branch
+                    branch=client.branch if client else None,  # Устанавливаем branch только если есть клиент
                 )
                 products_created += 1
 
-                # Увеличиваем счетчик товаров у клиента
-                if client.id not in clients_products_count:
+                # Увеличиваем счетчик товаров у клиента (только если клиент есть)
+                if client and client.id not in clients_products_count:
                     clients_products_count[client.id] = 0
-                clients_products_count[client.id] += 1
+                if client:
+                    clients_products_count[client.id] += 1
 
             if products_created > 0:
                 messages.success(request, f"Успешно создано продуктов: {products_created}")
@@ -325,7 +351,6 @@ def add_products_china(request):
     return redirect("page_china")
 
 
-
 def page_bishkek(request):
     """Отображение страницы для загрузки товаров в Бишкеке"""
     return render(request, "products/bishkek.html", {"title": "Бишкек", 'current_page': 'products'})
@@ -333,78 +358,96 @@ def page_bishkek(request):
 
 def add_products_bishkek(request):
     """Обработка загрузки файла и добавления/обновления товаров"""
-    if request.method == "POST":  # Используем POST для загрузки
+    if request.method == "POST":
         try:
             file = request.FILES.get('file')  # Получаем файл
             if not file:
                 messages.error(request, "Файл не выбран.")
-                return redirect("page_bishkek")  # Перенаправляем на форму
+                return redirect("page_bishkek")
 
             workbook = openpyxl.load_workbook(file)
             sheet = workbook.active
 
             products_created = 0
-            products_updated = 0  # Счётчик обновленных товаров
+            products_updated = 0
             clients_products_count = {}
 
-            for row in sheet.iter_rows(min_row=2, values_only=True):  # Пропускаем заголовок
-                if len(row) < 3 or not row[0] or not row[1] or not row[2]:
-                    continue  # Пропустить строки с недостаточными данными
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                # Требуем только product_code и weight
+                if len(row) < 2 or not row[0] or not row[2]:
+                    continue
 
                 product_code = str(row[0]).strip()
-                client_id = row[1]
+                client_id = row[1] if len(row) > 1 else None
                 weight = row[2]
-                price = row[3]
+                price = row[3] if len(row) > 3 else None
+                # date = row[4] if len(row) > 4 else None
 
-                # Если client_id — число с плавающей точкой, убираем ".0"
-                if isinstance(client_id, float):
-                    client_id = str(int(client_id))
-                else:
-                    client_id = str(client_id).strip()
-
-                # Найти клиента по code
-                client = Client.objects.filter(code=client_id).first()
-                if not client:
-                    messages.warning(request, f"Нету такого клиента: {client_id}")
-                    continue
+                client = None
+                # Обработка client_id, если он указан
+                if client_id:
+                    if isinstance(client_id, float):
+                        client_id = str(int(client_id))
+                    else:
+                        client_id = str(client_id).strip()
+                    if client_id:  # Проверяем, что client_id не пустая строка
+                        client = Client.objects.filter(code=client_id).first()
+                        if not client:
+                            messages.warning(request, f"Нету такого клиента: {client_id}")
 
                 # Получить статус "Бишкек"
                 bishkek_status, _ = Status.objects.get_or_create(name=BaseStatus.BISHKEK)
 
+                # # Обработка даты
+                # if date:
+                #     if isinstance(date, datetime):
+                #         date = date.date()  # Уже datetime, просто берем date
+                #     elif isinstance(date, str):
+                #         try:
+                #             date = datetime.strptime(date, "%d-%m-%Y").date()  # Формат из примера: 25-10-2024
+                #         except ValueError:
+                #             try:
+                #                 date = datetime.strptime(date, "%d.%m.%Y").date()  # Альтернатива: 25.10.2024
+                #             except ValueError:
+                #                 messages.warning(request, f"Неверный формат даты для {product_code}: {date}")
+                #                 date = None
+                #     else:
+                #         date = None
 
                 # Найти или обновить товар
                 product, created = Product.objects.get_or_create(
                     product_code=product_code,
                     client=client,
                     defaults={
-                        "date": datetime.utcnow(),
                         "status": bishkek_status,
                         "weight": weight,
+                        # "date": date if date else datetime.now().date(),  # Используем datetime.now()
                     }
                 )
 
                 if created:
                     products_created += 1
                 else:
-                    # Обновляем только эти значения
                     product.weight = weight
                     product.status = bishkek_status
-                    product.price = price
-                    product.date = datetime.utcnow()
+                    if price is not None:
+                        product.price = price
+                    # if date is not None:
+                    #     product.date = date
                     product.save()
                     products_updated += 1
 
-                # Увеличиваем счетчик товаров у клиента
-                if client.id not in clients_products_count:
+                # Увеличиваем счетчик товаров у клиента, только если клиент есть
+                if client and client.id not in clients_products_count:
                     clients_products_count[client.id] = 0
-                clients_products_count[client.id] += 1
+                if client:
+                    clients_products_count[client.id] += 1
 
             if products_created > 0:
                 messages.success(request, f"Успешно создано товаров: {products_created}")
             if products_updated > 0:
                 messages.info(request, f"Обновлено товаров: {products_updated}")
             
-            # Добавляем сообщение с количеством товаров по каждому клиенту
             if clients_products_count:
                 send_notification_bihskek.delay(clients_products_count)
                 for client_id, count in clients_products_count.items():
@@ -413,10 +456,9 @@ def add_products_bishkek(request):
         except Exception as e:
             messages.error(request, f"Ошибка при обработке файла: {str(e)}")
 
-        return redirect("page_bishkek")  # Перенаправляем на форму после обработки
+        return redirect("page_bishkek")
 
     return redirect("page_bishkek")
-
 
 @login_required
 def add_product(request):
