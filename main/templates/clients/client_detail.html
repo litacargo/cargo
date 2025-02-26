@@ -30,7 +30,7 @@
                         </td>
                         <td>{{ product.weight }}</td>
                         <td>{{ product.price }}</td>
-                        <td>{{ product.date }}</td>
+                        <td>{{ product.date|date:'Y.m.d'}}</td>
                         <td>{{ product.status.name }}</td>
                         <td>{{ product.branch.name }}</td>
                     </tr>

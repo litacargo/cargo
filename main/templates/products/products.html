@@ -81,7 +81,7 @@
             <td>{{ product.product_code }}</td>
             <td>{{ product.weight|default_if_none:'-' }}</td>
             <td>{{ product.price|default_if_none:'-' }}</td>
-            <td>{{ product.date }}</td>
+            <td>{{ product.date|date:'Y.m.d'}}</td>
             <td>{{ product.status.name }}</td>
             <td>{{ product.client.code }}</td>
             <td>

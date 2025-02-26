@@ -31,6 +31,7 @@
                     <th>Цена</th>
                     <th>Статус</th>
                     <th>Филиал</th>
+                    <th>Дата</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,13 +43,14 @@
                                    value="{{ product.id }}" 
                                    class="product-checkbox" 
                                    data-price="{{ product.price|default:0 }}"
-                                   data-weight="{{ product.weight|default:0 }}">
+                                   data-weight="{{ product.weight }}">
                         </td>
                         <td>{{ product.product_code }}</td>
                         <td>{{ product.weight|default:"—" }}</td>
                         <td>{{ product.price|default:"—" }}</td>
                         <td>{{ product.status.name }}</td>
                         <td>{{ product.branch|default:"—" }}</td>
+                        <td>{{ product.date|date:'Y.m.d'}}</td>
                     </tr>
                 {% empty %}
                     <tr>
@@ -73,34 +75,27 @@
     </form>
 {% endif %}
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% else %}alert-warning{% endif %} mt-3">
-            {{ message }}
-        </div>
-    {% endfor %}
-{% endif %}
 
 <script>
     // Function to calculate and update totals
     function updateTotals() {
-        const checkboxes = document.querySelectorAll('.product-checkbox:checked');
-        let totalPrice = 0;
-        let totalWeight = 0;
-        let totalCount = checkboxes.length;
+    const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+    let totalPrice = 0;
+    let totalWeight = 0;
+    let totalCount = checkboxes.length;
 
-        checkboxes.forEach(checkbox => {
-            const price = parseFloat(checkbox.getAttribute('data-price')) || 0;
-            const weight = parseFloat(checkbox.getAttribute('data-weight')) || 0;
-            totalPrice += price;
-            totalWeight += weight;
-        });
+    checkboxes.forEach(checkbox => {
+        const price = parseFloat(checkbox.getAttribute('data-price')) || 0;
+        const weightStr = checkbox.getAttribute('data-weight').replace(',', '.');
+        const weight = parseFloat(weightStr) || 0;
+        totalPrice += isNaN(price) ? 0 : price;
+        totalWeight += isNaN(weight) ? 0 : weight;
+    });
 
-        // Update the displays
-        document.getElementById('total-price').textContent = totalPrice;
-        document.getElementById('total-weight').textContent = totalWeight.toFixed(2);
-        document.getElementById('total-count').textContent = totalCount;
-    }
+    document.getElementById('total-price').textContent = totalPrice;
+    document.getElementById('total-weight').textContent = totalWeight.toFixed(2);
+    document.getElementById('total-count').textContent = totalCount;
+}
 
     // Event listener for select all checkbox
     document.getElementById('select-all')?.addEventListener('change', function() {
