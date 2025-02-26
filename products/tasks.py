@@ -6,6 +6,7 @@ from django.utils import timezone
 from .models import Product, Status, Client, ProductFile
 from config.models import Configuration
 from config.config import BaseStatus
+from django.conf import settings
 
 from notifications.notification_transit import notification_for_products_status_transit
 
@@ -49,15 +50,16 @@ def update_product_statuses():
 
 
 @shared_task
+@shared_task
 def process_china_products(product_file_id, request_user_id):
     """
     Асинхронная обработка файла с товарами для Китая.
     """
     try:
-        # Получаем объект файла из базы данных
         product_file = ProductFile.objects.get(id=product_file_id)
         file_path = product_file.file.path
         logger.info(f"Обрабатываем файл: {file_path}")
+        logger.info(f"MEDIA_ROOT в момент обработки: {settings.MEDIA_ROOT}")
 
         if not os.path.exists(file_path):
             logger.error(f"Файл не найден: {file_path}")
@@ -116,7 +118,6 @@ def process_china_products(product_file_id, request_user_id):
         if clients_products_count:
             send_notification_china.delay(clients_products_count)
 
-        # Обновляем статус файла
         product_file.status = 'processed'
         product_file.save()
 
@@ -138,7 +139,6 @@ def process_china_products(product_file_id, request_user_id):
         product_file.save()
         return {"error": str(e)}
     finally:
-        # Удаляем временный файл после обработки
         if 'file_path' in locals() and os.path.exists(file_path):
             os.remove(file_path)
             logger.info(f"Файл удалён: {file_path}")

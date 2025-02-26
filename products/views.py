@@ -1,5 +1,5 @@
 from datetime import datetime
-import os
+from django.conf import settings
 from django.utils import timezone
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, redirect, render
@@ -263,11 +263,14 @@ def add_products_china(request):
                 file=file,
                 user=request.user
             )
+            file_path = product_file.file.path
+            if not file_path.startswith(settings.MEDIA_ROOT):
+                raise ValueError("Invalid file path")
         except Exception as e:
             messages.error(request, f"Не удалось сохранить файл: {e}")
             return redirect("page_china")
 
-        # Запускаем задачу асинхронно, передаём ID файла
+        # Запускаем задачу асинхронно
         try:
             task = process_china_products.delay(product_file.id, request.user.id)
             messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
@@ -277,8 +280,6 @@ def add_products_china(request):
             product_file.save()
             messages.error(request, f"Ошибка при запуске задачи: {e}")
             return redirect("page_china")
-
-        return redirect("page_china")
 
     return redirect("page_china")
 
