@@ -39,3 +39,16 @@ class Product(models.Model):
     def __str__(self):
         return self.product_code
     
+
+class ProductFile(models.Model):
+    file = models.FileField(upload_to='temp_products/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, default='pending')  # pending, processed, failed
+    error_message = models.TextField(blank=True, null=True)
+
+    def get_absolute_url(self):
+        return self.file.url
+
+    def __str__(self):
+        return f"{self.file.name} (uploaded by {self.user})"

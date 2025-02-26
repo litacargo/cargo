@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 import openpyxl
-from products.models import Product, Status
+from products.models import Product, Status, ProductFile
 from clients.models import Client
 from branch.models import Branch
 
@@ -17,19 +17,6 @@ from config.views import get_user_branch
 from config.config import BaseStatus
 
 from .tasks import process_china_products, process_bishkek_products
-
-import os
-from django.conf import settings
-from django.core.files.storage import FileSystemStorage
-import logging
-
-logger = logging.getLogger(__name__)
-
-PRODUCTS_TEMP_DIR = os.path.join(settings.MEDIA_ROOT, 'temp_products')
-logger.info(f"PRODUCTS_TEMP_DIR установлен как: {PRODUCTS_TEMP_DIR}")
-os.makedirs(PRODUCTS_TEMP_DIR, exist_ok=True)
-fs = FileSystemStorage(location=PRODUCTS_TEMP_DIR)
-
 
 class ProductListView(View):
     def get(self, request):
@@ -258,7 +245,6 @@ def product_detail(request, product_id):
     })
 
 
-
 def page_china(request):
     """Отображение страницы для загрузки товаров в Китае"""
     return render(request, "products/china.html", {"title": "Китай", 'current_page': 'products'})
@@ -271,21 +257,27 @@ def add_products_china(request):
             messages.error(request, "Файл не выбран.")
             return redirect("page_china")
 
-        # Сохраняем файл в специальной директории
-        filename = fs.save(file.name, file)
-        file_path = fs.path(filename)
-        logger.info(f"Сохранен файл по пути: {file_path}")
-
-        # Проверяем, существует ли файл
-        if not os.path.exists(file_path):
-            logger.error(f"Файл не найден сразу после сохранения: {file_path}")
-            messages.error(request, f"Не удалось сохранить файл: {file_path}")
+        # Сохраняем файл через модель
+        try:
+            product_file = ProductFile.objects.create(
+                file=file,
+                user=request.user
+            )
+        except Exception as e:
+            messages.error(request, f"Не удалось сохранить файл: {e}")
             return redirect("page_china")
 
-        # Запускаем задачу асинхронно
-        logger.info(f"Передаём путь в задачу Celery: {file_path}")
-        task = process_china_products.delay(file_path, request.user.id)
-        messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
+        # Запускаем задачу асинхронно, передаём ID файла
+        try:
+            task = process_china_products.delay(product_file.id, request.user.id)
+            messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
+        except Exception as e:
+            product_file.status = 'failed'
+            product_file.error_message = str(e)
+            product_file.save()
+            messages.error(request, f"Ошибка при запуске задачи: {e}")
+            return redirect("page_china")
+
         return redirect("page_china")
 
     return redirect("page_china")
@@ -302,22 +294,26 @@ def add_products_bishkek(request):
             messages.error(request, "Файл не выбран.")
             return redirect("page_bishkek")
 
-        # Сохраняем файл в специальной директории
-        filename = fs.save(file.name, file)
-        file_path = fs.path(filename)
-        logger.info(f"Сохранен файл по пути: {file_path}")
-
-        # Проверяем, существует ли файл
-        if not os.path.exists(file_path):
-            logger.error(f"Файл не найден сразу после сохранения: {file_path}")
-            messages.error(request, f"Не удалось сохранить файл: {file_path}")
+        # Сохраняем файл через модель
+        try:
+            product_file = ProductFile.objects.create(
+                file=file,
+                user=request.user
+            )
+        except Exception as e:
+            messages.error(request, f"Не удалось сохранить файл: {e}")
             return redirect("page_bishkek")
 
-        # Запускаем задачу асинхронно
-        logger.info(f"Передаём путь в задачу Celery: {file_path}")
-        task = process_bishkek_products.delay(file_path, request.user.id)
-        messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
-        return redirect("page_bishkek")
+        # Запускаем задачу асинхронно, передаём ID файла
+        try:
+            task = process_bishkek_products.delay(product_file.id, request.user.id)
+            messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
+        except Exception as e:
+            product_file.status = 'failed'
+            product_file.error_message = str(e)
+            product_file.save()
+            messages.error(request, f"Ошибка при запуске задачи: {e}")
+            return redirect("page_bishkek")
 
     return redirect("page_bishkek")
 

@@ -3,7 +3,7 @@ import openpyxl
 from celery import shared_task
 from datetime import datetime, timedelta
 from django.utils import timezone
-from .models import Product, Status, Client
+from .models import Product, Status, Client, ProductFile
 from config.models import Configuration
 from config.config import BaseStatus
 
@@ -17,14 +17,6 @@ from openpyxl import load_workbook
 import logging
 logger = logging.getLogger(__name__)
 
-
-# @shared_task
-# def process_china_products(file_path, request_user_id):
-#     try:
-#         # ... логика ...
-#     finally:
-#         if os.path.exists(file_path):
-#             os.remove(file_path)
 
 
 
@@ -57,11 +49,23 @@ def update_product_statuses():
 
 
 @shared_task
-def process_china_products(file_path, request_user_id):
+def process_china_products(product_file_id, request_user_id):
     """
     Асинхронная обработка файла с товарами для Китая.
     """
     try:
+        # Получаем объект файла из базы данных
+        product_file = ProductFile.objects.get(id=product_file_id)
+        file_path = product_file.file.path
+        logger.info(f"Обрабатываем файл: {file_path}")
+
+        if not os.path.exists(file_path):
+            logger.error(f"Файл не найден: {file_path}")
+            product_file.status = 'failed'
+            product_file.error_message = f"Файл не найден: {file_path}"
+            product_file.save()
+            return {'error': f"Нет такого файла: '{file_path}'"}
+
         workbook = openpyxl.load_workbook(file_path)
         sheet = workbook.active
 
@@ -112,26 +116,51 @@ def process_china_products(file_path, request_user_id):
         if clients_products_count:
             send_notification_china.delay(clients_products_count)
 
-        return {
+        # Обновляем статус файла
+        product_file.status = 'processed'
+        product_file.save()
+
+        result = {
             "products_created": products_created,
             "products_skipped": products_skipped,
             "clients_products_count": clients_products_count
         }
+        logger.info(f"Обработка завершена: {result}")
+        return result
 
+    except ProductFile.DoesNotExist:
+        logger.error(f"Файл с ID {product_file_id} не найден в базе данных")
+        return {"error": f"Файл с ID {product_file_id} не найден"}
     except Exception as e:
+        logger.error(f"Ошибка при обработке файла ID {product_file_id}: {e}")
+        product_file.status = 'failed'
+        product_file.error_message = str(e)
+        product_file.save()
         return {"error": str(e)}
     finally:
         # Удаляем временный файл после обработки
-        if os.path.exists(file_path):
+        if 'file_path' in locals() and os.path.exists(file_path):
             os.remove(file_path)
-
+            logger.info(f"Файл удалён: {file_path}")
 
 @shared_task
-def process_bishkek_products(file_path, request_user_id):
+def process_bishkek_products(product_file_id, request_user_id):
     """
     Асинхронная обработка файла с товарами для Бишкека.
     """
     try:
+        # Получаем объект файла из базы данных
+        product_file = ProductFile.objects.get(id=product_file_id)
+        file_path = product_file.file.path
+        logger.info(f"Обрабатываем файл: {file_path}")
+
+        if not os.path.exists(file_path):
+            logger.error(f"Файл не найден: {file_path}")
+            product_file.status = 'failed'
+            product_file.error_message = f"Файл не найден: {file_path}"
+            product_file.save()
+            return {'error': f"Нет такого файла: '{file_path}'"}
+
         workbook = openpyxl.load_workbook(file_path)
         sheet = workbook.active
 
@@ -191,15 +220,29 @@ def process_bishkek_products(file_path, request_user_id):
         if clients_products_count:
             send_notification_bihskek.delay(clients_products_count)
 
-        return {
+        # Обновляем статус файла
+        product_file.status = 'processed'
+        product_file.save()
+
+        result = {
             "products_created": products_created,
             "products_updated": products_updated,
             "clients_products_count": clients_products_count
         }
+        logger.info(f"Обработка завершена: {result}")
+        return result
 
+    except ProductFile.DoesNotExist:
+        logger.error(f"Файл с ID {product_file_id} не найден в базе данных")
+        return {"error": f"Файл с ID {product_file_id} не найден"}
     except Exception as e:
+        logger.error(f"Ошибка при обработке файла ID {product_file_id}: {e}")
+        product_file.status = 'failed'
+        product_file.error_message = str(e)
+        product_file.save()
         return {"error": str(e)}
     finally:
         # Удаляем временный файл после обработки
-        if os.path.exists(file_path):
+        if 'file_path' in locals() and os.path.exists(file_path):
             os.remove(file_path)
+            logger.info(f"Файл удалён: {file_path}")

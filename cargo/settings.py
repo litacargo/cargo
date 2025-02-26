@@ -3,7 +3,7 @@ from pathlib import Path
 from .config import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER, ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS, SECRET_KEY_ENV, CELERY_BROKER_URL_ENV, DEBUG_BOOL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
