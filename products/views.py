@@ -18,6 +18,19 @@ from config.config import BaseStatus
 
 from .tasks import process_china_products, process_bishkek_products
 
+import os
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+import logging
+
+logger = logging.getLogger(__name__)
+
+PRODUCTS_TEMP_DIR = os.path.join(settings.MEDIA_ROOT, 'temp_products')
+logger.info(f"PRODUCTS_TEMP_DIR установлен как: {PRODUCTS_TEMP_DIR}")
+os.makedirs(PRODUCTS_TEMP_DIR, exist_ok=True)
+fs = FileSystemStorage(location=PRODUCTS_TEMP_DIR)
+
+
 class ProductListView(View):
     def get(self, request):
         # Получение параметров фильтрации
@@ -244,13 +257,7 @@ def product_detail(request, product_id):
         'title': 'Детали',
     })
 
-import os
-from django.conf import settings
-from django.core.files.storage import FileSystemStorage
-# Создаем директорию для временных файлов продуктов
-PRODUCTS_TEMP_DIR = os.path.join(settings.MEDIA_ROOT, 'temp_products')
-os.makedirs(PRODUCTS_TEMP_DIR, exist_ok=True)
-fs = FileSystemStorage(location=PRODUCTS_TEMP_DIR)
+
 
 def page_china(request):
     """Отображение страницы для загрузки товаров в Китае"""
@@ -267,8 +274,16 @@ def add_products_china(request):
         # Сохраняем файл в специальной директории
         filename = fs.save(file.name, file)
         file_path = fs.path(filename)
+        logger.info(f"Сохранен файл по пути: {file_path}")
+
+        # Проверяем, существует ли файл
+        if not os.path.exists(file_path):
+            logger.error(f"Файл не найден сразу после сохранения: {file_path}")
+            messages.error(request, f"Не удалось сохранить файл: {file_path}")
+            return redirect("page_china")
 
         # Запускаем задачу асинхронно
+        logger.info(f"Передаём путь в задачу Celery: {file_path}")
         task = process_china_products.delay(file_path, request.user.id)
         messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
         return redirect("page_china")
@@ -290,8 +305,16 @@ def add_products_bishkek(request):
         # Сохраняем файл в специальной директории
         filename = fs.save(file.name, file)
         file_path = fs.path(filename)
+        logger.info(f"Сохранен файл по пути: {file_path}")
+
+        # Проверяем, существует ли файл
+        if not os.path.exists(file_path):
+            logger.error(f"Файл не найден сразу после сохранения: {file_path}")
+            messages.error(request, f"Не удалось сохранить файл: {file_path}")
+            return redirect("page_bishkek")
 
         # Запускаем задачу асинхронно
+        logger.info(f"Передаём путь в задачу Celery: {file_path}")
         task = process_bishkek_products.delay(file_path, request.user.id)
         messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
         return redirect("page_bishkek")

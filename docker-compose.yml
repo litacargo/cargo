@@ -17,10 +17,11 @@ services:
     command: ["/docker/one.sh"]
     volumes:
       - .:/app
+      - media-data:/app/media  # Добавляем том для media
     ports:
-      - "8000:8000"  # Изменено на 8000, как вы хотели
+      - "8000:8000"
     depends_on:
-      - redis  # Заменил db на redis, если база данных не используется
+      - redis
 
   celery_worker:
     build:
@@ -29,9 +30,10 @@ services:
     command: ["/docker/celery_worker.sh"]
     volumes:
       - .:/app
+      - media-data:/app/media  # Тот же том для Celery
     depends_on:
       - redis
-      - web  # Чтобы убедиться, что Django инициализирован
+      - web
 
   celery_beat:
     build:
@@ -40,9 +42,11 @@ services:
     command: ["/docker/celery_beat.sh"]
     volumes:
       - .:/app
+      - media-data:/app/media  # Тот же том для Celery Beat
     depends_on:
       - redis
       - web
 
 volumes:
   redis-data:
+  media-data:  # Новый том для media
