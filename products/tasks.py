@@ -60,8 +60,6 @@ def update_product_statuses():
 def process_china_products(file_path, request_user_id):
     """
     Асинхронная обработка файла с товарами для Китая.
-    file_path: путь к временно сохраненному файлу
-    request_user_id: ID пользователя для отправки сообщений (если нужно)
     """
     try:
         workbook = openpyxl.load_workbook(file_path)
@@ -87,9 +85,6 @@ def process_china_products(file_path, request_user_id):
                     client_id = str(client_id).strip()
 
                 client = Client.objects.filter(code=client_id).first()
-                if not client:
-                    # Сообщения не работают напрямую в Celery, логируем или сохраняем отдельно
-                    pass  # Можно добавить логирование
 
             china_status, _ = Status.objects.get_or_create(name=BaseStatus.CHINA)
 
@@ -114,12 +109,6 @@ def process_china_products(file_path, request_user_id):
             if client:
                 clients_products_count[client.id] += 1
 
-        # Здесь можно отправить уведомление или сохранить результат
-        if products_created > 0:
-            # messages.success не работает в задаче, нужно использовать другой способ
-            pass
-        if products_skipped > 0:
-            pass
         if clients_products_count:
             send_notification_china.delay(clients_products_count)
 
@@ -130,16 +119,17 @@ def process_china_products(file_path, request_user_id):
         }
 
     except Exception as e:
-        # Логируем ошибку или сохраняем её для пользователя
         return {"error": str(e)}
-    
+    finally:
+        # Удаляем временный файл после обработки
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
 
 @shared_task
 def process_bishkek_products(file_path, request_user_id):
     """
     Асинхронная обработка файла с товарами для Бишкека.
-    file_path: путь к временно сохраненному файлу
-    request_user_id: ID пользователя для отправки сообщений (если нужно)
     """
     try:
         workbook = openpyxl.load_workbook(file_path)
@@ -166,9 +156,6 @@ def process_bishkek_products(file_path, request_user_id):
                     client_id = str(client_id).strip()
 
                 client = Client.objects.filter(code=client_id).first()
-                if not client:
-                    # Логируем предупреждение, так как messages не работает в Celery
-                    pass
 
             bishkek_status, _ = Status.objects.get_or_create(name=BaseStatus.BISHKEK)
 
@@ -178,18 +165,22 @@ def process_bishkek_products(file_path, request_user_id):
                 defaults={
                     "status": bishkek_status,
                     "weight": weight,
-                    "date": datetime.now().date(),
+                    "date": timezone.now().date(),
                 }
             )
 
             if created:
                 products_created += 1
             else:
-                product.weight = weight
-                product.status = bishkek_status
+                update_fields = {
+                    "weight": weight,
+                    "status": bishkek_status,
+                    "date": timezone.now().date(),
+                }
                 if price is not None:
-                    product.price = price
-                product.save()
+                    update_fields["price"] = price
+
+                Product.objects.filter(id=product.id).update(**update_fields)
                 products_updated += 1
 
             if client and client.id not in clients_products_count:
@@ -197,7 +188,6 @@ def process_bishkek_products(file_path, request_user_id):
             if client:
                 clients_products_count[client.id] += 1
 
-        # Возвращаем результат для дальнейшего использования
         if clients_products_count:
             send_notification_bihskek.delay(clients_products_count)
 
@@ -210,5 +200,6 @@ def process_bishkek_products(file_path, request_user_id):
     except Exception as e:
         return {"error": str(e)}
     finally:
+        # Удаляем временный файл после обработки
         if os.path.exists(file_path):
-            os.remove(file_path)  # Очищаем временный файл
+            os.remove(file_path)

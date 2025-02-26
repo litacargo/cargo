@@ -244,6 +244,13 @@ def product_detail(request, product_id):
         'title': 'Детали',
     })
 
+import os
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+# Создаем директорию для временных файлов продуктов
+PRODUCTS_TEMP_DIR = os.path.join(settings.MEDIA_ROOT, 'temp_products')
+os.makedirs(PRODUCTS_TEMP_DIR, exist_ok=True)
+fs = FileSystemStorage(location=PRODUCTS_TEMP_DIR)
 
 def page_china(request):
     """Отображение страницы для загрузки товаров в Китае"""
@@ -257,11 +264,9 @@ def add_products_china(request):
             messages.error(request, "Файл не выбран.")
             return redirect("page_china")
 
-        # Сохраняем файл временно
-        file_path = os.path.join('/tmp', file.name)  # Используйте временную папку
-        with open(file_path, 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
+        # Сохраняем файл в специальной директории
+        filename = fs.save(file.name, file)
+        file_path = fs.path(filename)
 
         # Запускаем задачу асинхронно
         task = process_china_products.delay(file_path, request.user.id)
@@ -269,7 +274,6 @@ def add_products_china(request):
         return redirect("page_china")
 
     return redirect("page_china")
-
 
 def page_bishkek(request):
     """Отображение страницы для загрузки товаров в Бишкеке"""
@@ -283,11 +287,9 @@ def add_products_bishkek(request):
             messages.error(request, "Файл не выбран.")
             return redirect("page_bishkek")
 
-        # Сохраняем файл временно
-        file_path = os.path.join('/tmp', file.name)  # Используйте временную папку
-        with open(file_path, 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
+        # Сохраняем файл в специальной директории
+        filename = fs.save(file.name, file)
+        file_path = fs.path(filename)
 
         # Запускаем задачу асинхронно
         task = process_bishkek_products.delay(file_path, request.user.id)
