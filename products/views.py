@@ -1,12 +1,12 @@
 from datetime import datetime
-from django.conf import settings
+import os
 from django.utils import timezone
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 import openpyxl
-from products.models import Product, Status, ProductFile
+from products.models import Product, Status
 from clients.models import Client
 from branch.models import Branch
 
@@ -257,31 +257,11 @@ def add_products_china(request):
             messages.error(request, "Файл не выбран.")
             return redirect("page_china")
 
-        # Сохраняем файл через модель
-        try:
-            product_file = ProductFile.objects.create(
-                file=file,
-                user=request.user
-            )
-            file_path = product_file.file.path
-            if not file_path.startswith(settings.MEDIA_ROOT):
-                raise ValueError("Invalid file path")
-        except Exception as e:
-            messages.error(request, f"Не удалось сохранить файл: {e}")
-            return redirect("page_china")
-
-        # Запускаем задачу асинхронно
-        try:
-            task = process_china_products.delay(product_file.id, request.user.id)
-            messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
-        except Exception as e:
-            product_file.status = 'failed'
-            product_file.error_message = str(e)
-            product_file.save()
-            messages.error(request, f"Ошибка при запуске задачи: {e}")
-            return redirect("page_china")
-
-    return redirect("page_china")
+        # Запускаем задачу асинхронно, передавая содержимое файла
+        file_content = file.read()
+        task = process_china_products.delay(file_content, request.user.id)
+        messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
+        return redirect("page_china")
 
 def page_bishkek(request):
     """Отображение страницы для загрузки товаров в Бишкеке"""
@@ -295,26 +275,11 @@ def add_products_bishkek(request):
             messages.error(request, "Файл не выбран.")
             return redirect("page_bishkek")
 
-        # Сохраняем файл через модель
-        try:
-            product_file = ProductFile.objects.create(
-                file=file,
-                user=request.user
-            )
-        except Exception as e:
-            messages.error(request, f"Не удалось сохранить файл: {e}")
-            return redirect("page_bishkek")
-
-        # Запускаем задачу асинхронно, передаём ID файла
-        try:
-            task = process_bishkek_products.delay(product_file.id, request.user.id)
-            messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
-        except Exception as e:
-            product_file.status = 'failed'
-            product_file.error_message = str(e)
-            product_file.save()
-            messages.error(request, f"Ошибка при запуске задачи: {e}")
-            return redirect("page_bishkek")
+        # Запускаем задачу асинхронно, передавая содержимое файла
+        file_content = file.read()
+        task = process_bishkek_products.delay(file_content, request.user.id)
+        messages.info(request, "Обработка файла запущена. Результаты будут доступны позже.")
+        return redirect("page_bishkek")
 
     return redirect("page_bishkek")
 
